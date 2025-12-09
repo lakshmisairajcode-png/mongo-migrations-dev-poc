@@ -6,7 +6,7 @@ module.exports = {
     const dbName = db.databaseName || "unknown";
     console.log("Connected DB (from migration):", dbName);
 
-    const collectionName = "migration_test";
+    const collectionName = "document_types";
     console.log("Using collection:", collectionName);
 
     const result = await db.collection(collectionName).insertOne({
