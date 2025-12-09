@@ -20,8 +20,8 @@ const current = dbByEnv[env];
 
 const config = {
   mongodb: {
-    url: current.url,
-    databaseName: current.databaseName,
+    url: "mongodb+srv://sairaj-dev:etQE2lpdMMYXXR7L@cluster0.0xaeq.mongodb.net/CE_DEV_V01",
+    databaseName: "CE_DEV_V01",
     options: {},
   },
   migrationsDir: "scripts",
