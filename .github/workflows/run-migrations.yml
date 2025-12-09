@@ -1,80 +1,23 @@
-name: Run MongoDB Migrations (migrate-mongo + AWS Secrets)
+name: Run MongoDB Migrations (Dev only)
 
 on:
- workflow_dispatch:
-   inputs:
-     env:
-       description: "Target environment"
-       required: true
-       default: "dev"
-       type: choice
-       options:
-         - dev
-         - qa
-         - prod
+  workflow_dispatch:
 
 jobs:
- migrate:
-   runs-on: ubuntu-latest
+  migrate-dev:
+    runs-on: ubuntu-latest
 
-   steps:
-     - name: Checkout repository
-       uses: actions/checkout@v4
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-     - name: Setup Node.js
-       uses: actions/setup-node@v4
-       with:
-         node-version: "20"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-     - name: Configure AWS credentials
-       uses: aws-actions/configure-aws-credentials@v5
-       with:
-         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-         aws-region: ${{ secrets.AWS_REGION }}
+      - name: Install dependencies
+        run: npm install
 
-     - name: Fetch Mongo URI from AWS Secrets Manager
-       id: fetch-uri
-       run: |
-        ENV_NAME="${{ github.event.inputs.env }}"
-
-        if [ "$ENV_NAME" = "dev" ]; then
-          SECRET_ID="mongo/dev-uri"
-          VAR_NAME="MONGO_URI_DEV"
-        elif [ "$ENV_NAME" = "qa" ]; then
-          SECRET_ID="mongo/qa-uri"
-          VAR_NAME="MONGO_URI_QA"
-        else
-          SECRET_ID="mongo/prod-uri"
-          VAR_NAME="MONGO_URI_PROD"
-        fi
-
-        echo "Using secret id: $SECRET_ID"
-
-        URI=$(aws secretsmanager get-secret-value \
-          --secret-id "$SECRET_ID" \
-          --query SecretString \
-          --output text)
-
-        if [ -z "$URI" ] || [ "$URI" = "null" ]; then
-          echo "Mongo URI is empty for secret $SECRET_ID"
-          exit 1
-        fi
-
-        echo "$VAR_NAME=$URI" >> "$GITHUB_ENV"
-
-     - name: Install dependencies
-       run: npm install
-
-     - name: Run migrate-mongo up
-       run: npx migrate-mongo up
-       env:
-         ENV: ${{ github.event.inputs.env }}
-
-         MONGO_URI_DEV: ${{ env.MONGO_URI_DEV }}
-         MONGO_URI_QA: ${{ env.MONGO_URI_QA }}
-         MONGO_URI_PROD: ${{ env.MONGO_URI_PROD }}
-
-         MONGO_DB_DEV: "CE_DEV_V01"
-         MONGO_DB_QA: "CE_QA_V01"
-         MONGO_DB_PROD: "CE_PROD_V01"
+      - name: Run migrations (Dev)
+        run: npx migrate-mongo up
